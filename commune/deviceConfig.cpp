@@ -353,7 +353,7 @@ void DeviceConfig::do_init() {
 	}
 
 	// configure PcapPlusPlus Log Error Level
-	LoggerPP::getInstance().suppressErrors();
+	Logger::getInstance().setAllModlesToLogLevel(Logger::LogLevel::Info);
 
 	// use 1 core for DPDK master and 17 cores for workers
 	vector<SystemCore> cores_to_use;
@@ -461,7 +461,7 @@ auto DeviceConfig::configure_via_json(const json & jin) -> bool {
 		}
 
 		if (jin.find("DPDK") == jin.end()) {
-			LOG_DEBUG("DPDK config enrty not found.");
+			WARN("DPDK config entry not found.");
 			return false;
 		}
 		if (jin.find("Analyzer") != jin.end()) {
