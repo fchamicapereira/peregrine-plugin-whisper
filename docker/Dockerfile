@@ -2,23 +2,23 @@ FROM --platform=linux/amd64 ubuntu:focal
 
 # https://stackoverflow.com/questions/51023312/docker-having-issues-installing-apt-utils
 ARG DEBIAN_FRONTEND=noninteractive
+ENV TZ=Europe/Lisbon
 
-ENV DPDK_DIR             /opt/dpdk
-ENV PCAPPLUSPLUS_DIR     /opt/PcapPlusPlus
-ENV CONDA_DIR            /opt/conda
-ENV Torch_DIR            /opt/pytorch
+RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 
-ENV CMAKE_VERSION        v3.25.2
-ENV DPDK_VERSION         v21.11
-ENV PCAPPLUSPLUS_VERSION v22.11
-# ENV DPDK_VERSION v18.02
-# ENV PCAPPLUSPLUS_VERSION v19.04
+ENV DPDK_DIR            /opt/dpdk
+ENV PCAPPLUSPLUS_DIR    /opt/PcapPlusPlus
+ENV CONDA_DIR           /opt/conda
+ENV PYTORCH_DIR         /opt/pytorch
+
+ENV CMAKE_VERSION			v3.25.2
+ENV DPDK_VERSION			v21.11
+ENV PCAPPLUSPLUS_VERSION	v22.11
+ENV PYTORCH_VERSION			release/1.9
 
 WORKDIR /opt
 
-RUN apt-get update
-
-RUN apt-get -y install \
+RUN apt update && apt -y install \
 	man \
 	build-essential \
 	wget \
@@ -55,13 +55,13 @@ RUN apt-get -y install \
 	libcereal-dev \
 	python3-pip \
 	pkg-config \
-	libmlpack-dev
+	libmlpack-dev \
+	fzf \
+	shellcheck
 
-##########################
-#                        #
-#         CMake          #
-#                        #
-##########################
+RUN dpkg-reconfigure --frontend noninteractive tzdata
+
+# CMake
 
 RUN git clone \
 	--depth 1 \
@@ -73,11 +73,7 @@ RUN cd CMake && \
 	make -j && \
 	make install
 
-##########################
-#                        #
-#          DPDK          #
-#                        #
-##########################
+# DPDK
 
 RUN git clone \
 	--depth 1 \
@@ -94,11 +90,7 @@ RUN cd $DPDK_DIR && \
 
 ENV RTE_SDK $DPDK_DIR
 
-##########################
-#                        #
-#    LibPcapPlusPlus     #
-#                        #
-##########################
+# LibPcapPlusPlus
 
 RUN git clone \
 	--depth 1 \
@@ -111,27 +103,18 @@ RUN cd $PCAPPLUSPLUS_DIR && \
 	make -j libs && \
 	make install
 
-##########################
-#                        #
-#        PyTorch         #
-#                        #
-##########################
+# PyTorch
 
 RUN git clone \
+	--branch $PYTORCH_VERSION \
 	--recursive \
 	https://github.com/pytorch/pytorch \
-	$Torch_DIR
+	$PYTORCH_DIR
 
-RUN cd $Torch_DIR && \
+RUN cd $PYTORCH_DIR && \
 	git submodule sync && \
 	git submodule update --init --recursive && \
 	pip3 install -r requirements.txt && \
 	python3 setup.py develop
 
-COPY . /opt/whisper
-WORKDIR /opt/whisper
-
-RUN mkdir build && \
-	cd build && \
-	cmake -G Ninja .. && \
-	ninja
+CMD [ "/bin/bash", "-l"]

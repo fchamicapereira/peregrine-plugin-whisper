@@ -1,0 +1,14 @@
+version: "3.2"
+services:
+    peregrine-whisper:
+        build: .
+        image: peregrine-whisper
+        volumes:
+            - type: bind
+              source: ../
+              target: /root/peregrine-whisper
+        environment:
+            DISPLAY: $DISPLAY
+        network_mode: "host"
+        tty: true
+        privileged: true
