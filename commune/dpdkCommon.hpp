@@ -25,23 +25,23 @@
 #include <pcapplusplus/UdpLayer.h>
 #include <pcapplusplus/Logger.h>
 
-#include "../common.hpp"
+#include <pcapplusplus/RawPacket.h>
+#include <pcapplusplus/GeneralUtils.h>
 
+#include <pcapplusplus/PeregrineLayer.h>
+
+#include "../common.hpp"
 
 using namespace std;
 using namespace pcpp;
 
-
-namespace Whisper
-{
-
+namespace Whisper {
 
 using nic_queue_id_t = uint16_t;
 using nic_port_id_t = uint16_t;
 using cpu_core_id_t = uint16_t;
 using mem_pool_size_t = uint16_t;
 using parser_queue_assign_t = map<DpdkDevice *, vector<nic_queue_id_t> > ;
-
 
 struct DpdkConfig final {
 
@@ -61,27 +61,23 @@ struct DpdkConfig final {
     void add_nic_queue(parser_queue_assign_t::value_type p) {
         nic_queue_list.insert(p);
     }
-
 };
 
+struct PktMetadata final {
 
-struct PacketMetaData final {
+	uint32_t ip_src;
+	uint16_t proto;
+	uint16_t length;
+	double ts;
 
-	uint32_t address;
-	uint16_t proto_code;
-	uint16_t pkt_length;
-	double time_stamp;
+	PktMetadata() {};
 
-	PacketMetaData() {};
+	explicit PktMetadata(uint32_t a, uint16_t p, uint16_t l, double t):
+	        ip_src(a), proto(p), length(l), ts(t) {}
 
-	explicit PacketMetaData(uint32_t a, uint16_t t, uint16_t l, double ts):
-			address(a), proto_code(t), pkt_length(l), time_stamp(ts) {}
-	
-	virtual ~PacketMetaData() {};
-    PacketMetaData & operator=(const PacketMetaData &) = default;
-    PacketMetaData(const PacketMetaData &) = default;
-
+	virtual ~PktMetadata() {};
+    PktMetadata & operator=(const PktMetadata &) = default;
+    PktMetadata(const PktMetadata &) = default;
 };
-
 
 }

@@ -2,6 +2,7 @@
 cmake_minimum_required(VERSION 3.10 FATAL_ERROR)
 project(Whisper)
 set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 # Add path_prefix and options for PyTorch C++
 set(CMAKE_PREFIX_PATH /opt/pytorch)
