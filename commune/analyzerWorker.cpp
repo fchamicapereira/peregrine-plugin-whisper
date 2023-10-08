@@ -152,9 +152,10 @@ auto AnalyzerWorkerThread::fetch_from_parser(const shared_ptr<ParserWorkerThread
 
     if (pt->meta_index + m_index < meta_pkt_arr_size) {
         copy_len = pt->meta_index > max_fetch ? max_fetch : pt->meta_index;
+        LOGF("copied len: %lu", copy_len);
     } else {
         copy_len = min(meta_pkt_arr_size - m_index - 1, max_fetch);
-        // WARNF("Analyzer on core # %2d: queue reach max.\n", getCoreId());
+        WARNF("Analyzer on core # %2d: queue reach max.\n", getCoreId());
     }
     new_index = pt->meta_index - copy_len;
 
@@ -197,15 +198,19 @@ void AnalyzerWorkerThread::wave_analyze() {
     /* // clear the buffer */
     m_index = 0;
 
+    LOGF("cur len: %lu", cur_len);
+    received_num += cur_len;
+    LOGF("Received num: %d", received_num);
+
     decltype(mp)::const_iterator iter_mp;
     for (iter_mp = mp.cbegin(); iter_mp != mp.cend();) {
         const auto & _ve = iter_mp->second;
-        LOGF("ip src: %u", iter_mp->first);
-        LOGF("mp.size: %lu", mp.size());
-        LOGF("ve.size: %lu", _ve.size());
-        LOGF("n_fft: %lu", p_analyzer_conf->n_fft);
+        /* LOGF("ip src: %u", iter_mp->first); */
+        /* LOGF("mp.size: %lu", mp.size()); */
+        /* LOGF("ve.size: %lu", _ve.size()); */
+        /* LOGF("n_fft: %lu", p_analyzer_conf->n_fft); */
         if(_ve.size() < 2 * p_analyzer_conf->n_fft) {
-            LOGF("TEST 4");
+            /* LOGF("TEST 4"); */
             ++iter_mp;
             continue;
         }
@@ -254,11 +259,12 @@ void AnalyzerWorkerThread::wave_analyze() {
 
         if (m_is_train) {
             LOGF("Enter train");
-
+            /* LOGF("Current packets: %ld", _ve.size()); */
             // feed data to learner
             torch::Tensor ten_temp;
             if (ten_res.size(0) > p_analyzer_conf->mean_win_train + 1
-                    && !p_learner->reach_learn()) {
+                    /* && !p_learner->reach_learn_records()) { */
+                    && !p_learner->reach_learn_packets()) {
                 vector<vector<double_t> > data_to_add;
                 for (size_t i = 0; i < p_analyzer_conf->num_train_sample; i ++) {
                     size_t start_index = rand()
@@ -274,10 +280,14 @@ void AnalyzerWorkerThread::wave_analyze() {
                     data_to_add.push_back(_dt);
                 }
 
+                /* LOGF("IF"); */
+                /* LOGF("Received packets: %lu", ten_res.size(0)); */
                 p_learner->acquire_semaphore_data();
-                p_learner->add_train_data(data_to_add);
+                p_learner->add_train_data(data_to_add, cur_len);
                 p_learner->release_semaphore_data();
             } else {
+                /* LOGF("ELSE"); */
+                /* LOGF("Received packets: %lu", ten_res.size(0)); */
                 ten_temp =  ten_res.mean(0);
                 vector<double_t> data_to_add;
 
@@ -286,14 +296,15 @@ void AnalyzerWorkerThread::wave_analyze() {
                 }
 
                 p_learner->acquire_semaphore_data();
-                p_learner->add_train_data(data_to_add);
+                p_learner->add_train_data(data_to_add, cur_len);
                 p_learner->release_semaphore_data();
             }
 
             // can start train, but none start train
             p_learner->acquire_semaphore_learn();
 
-            if (p_learner->reach_learn() && !p_learner->start_learn) {
+            /* if (p_learner->reach_learn_records() && !p_learner->start_learn) { */
+            if (p_learner->reach_learn_packets() && !p_learner->start_learn) {
                 if (p_analyzer_conf->mode_verbose) {
                     LOGF("Analyer on core %2d: trigger the training of learner.", getCoreId());
                 }

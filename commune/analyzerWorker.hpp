@@ -87,7 +87,9 @@ class AnalyzerWorkerThread final : public pcpp::DpdkWorkerThread {
         // Core Id assigned by DPDK
         cpu_core_id_t m_core_id;
 
-        // Index of per-packet properties array copied form Analyzer
+        int received_num = 0;
+
+        // Index of per-packet properties array copied from Analyzer
         mutable size_t m_index = 0;
         // pause time for waitting analyzer (us)
         size_t pause_time = 50000;

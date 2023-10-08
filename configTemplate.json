@@ -1,11 +1,11 @@
 {
     "Analyzer": {
-        "pause_time": 1000,
+        "pause_time": 100,
 
-        "n_fft": 20,
-        "mean_win_train": 20,
+        "n_fft": 50,
+        "mean_win_train": 50,
         "mean_win_test": 100,
-        "num_train_sample": 20,
+        "num_train_sample": 50,
 
         "mode_verbose": true,
         "center_verbose": false,
@@ -20,17 +20,17 @@
         "result_buffer_size": 500000,
 
         "save_to_file": true,
-        "save_dir": "../result/Template/",
-        "save_file_prefix": "Template"
+        "save_dir": "../result/cic-ids-2018-dos-slowloris/",
+        "save_file_prefix": "cic-ids-2018-dos-slowloris-256"
     },
     "Learner": {
         "val_K": 10,
-        "num_train_data": 10000,
+        "num_train_data": 900000,
         "verbose": true,
         "save_result": false,
-        "save_result_file": "",
-        "load_result": true,
-        "load_result_file": "../cache/20200101.json"
+        "save_result_file": "../cache/cic-ids-2018-dos-goldeneye.json",
+        "load_result": false,
+        "load_result_file": "../cache/cic-ids-2018-dos-goldeneye.json"
     },
     "DPDK" : {
         "number_rx_queue": 1,
@@ -54,7 +54,7 @@
         "verbose_interval": 5.0,
         "verbose_mode": "complete",
 
-        "max_receive_burts": 64,
+        "max_receive_burts": 10000,
         "meta_pkt_arr_size": 10000000
     }
 }

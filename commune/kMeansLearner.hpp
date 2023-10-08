@@ -61,6 +61,8 @@ class KMeansLearner final {
         // Dataset collected from AnalyzeWorker
         vector<vector<double_t> > train_set;
 
+        int train_packets = 0;
+
         // Mutual exclution lock for trainSet
         mutable sem_t data_sema;
         void inline acquire_semaphore_data() const {
@@ -91,7 +93,8 @@ class KMeansLearner final {
             assert(p_learner_config->save_result);
 
             try {
-                ofstream fs(p_learner_config->load_result_file);
+                /* ofstream fs(p_learner_config->load_result_file); */
+                ofstream fs(p_learner_config->save_result_file);
 
                 if (!fs.good()) {
                     throw logic_error("Open target file failed.");
@@ -185,14 +188,20 @@ class KMeansLearner final {
             sem_init(&learn_sema, 0, 1);
         }
 
-        // Add single recored to the training dataset
-        void add_train_data(feature_t & ve) {
+        // Add single record to the training dataset
+        void add_train_data(feature_t & ve, int pkt_num) {
             train_set.push_back(ve);
+            train_packets += pkt_num;
+            LOGF("Training single. Currently: %ld records. %d packets.",
+                    train_set.size(), train_packets);
         }
 
-        // Add a batch of data to the training dataset
-        void add_train_data(vector<feature_t> & vve) {
+        // Add batch to the training dataset
+        void add_train_data(vector<feature_t> & vve, int pkt_num) {
             train_set.insert(train_set.end(), vve.begin(), vve.end());
+            train_packets += pkt_num;
+            LOGF("Training batch. Currently: %ld records. %d packets.",
+                    train_set.size(), train_packets);
         }
 
         // Start the training process.
@@ -256,12 +265,25 @@ class KMeansLearner final {
             }
 
             if(p_learner_config->verbose) {
-                LOGF("Learner: Finsih training");
+                LOGF("Learner: Finish training");
             }
         }
 
         // Training data is enough or not
-        auto inline reach_learn() const -> bool {
+        // Peregrine method: check via number of total received packets
+        auto inline reach_learn_packets() const -> bool {
+            if (p_learner_config == nullptr) {
+                FATAL_ERROR("Configuration for learner not found.");
+            }
+            if (p_learner_config->load_result) {
+                return true;
+            }
+            return train_packets > p_learner_config->num_train_data;
+        }
+
+        // Training data is enough or not
+        // Original method: check via number of received records (== flows per batch)
+        auto inline reach_learn_records() const -> bool {
             if (p_learner_config == nullptr) {
                 FATAL_ERROR("Configuration for learner not found.");
             }

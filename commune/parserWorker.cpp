@@ -8,6 +8,8 @@ using namespace Whisper;
 
 bool ParserWorkerThread::run(uint32_t core_id) {
 
+	uint16_t peregrinePkts = 0;
+
 	if (p_parser_config == nullptr) {
 		FATAL_ERROR("NULL parser configuration parameters.");
 	}
@@ -90,7 +92,6 @@ bool ParserWorkerThread::run(uint32_t core_id) {
 				uint16_t packetsReceived = dev->receivePackets(
 					packet_arr, p_parser_config->max_receive_burts, *iter2);
 
-				uint16_t peregrinePkts = 0;
 
 				// iterate all of the packets and parse the metadata
 				for (uint16_t i = 0; i < packetsReceived; i++) {
